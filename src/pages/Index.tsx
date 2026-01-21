@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigation } from '@/components/Navigation';
 import { LandingSections } from '@/components/LandingSections';
+import { Footer } from '@/components/Footer';
 import { ScrollToTop } from '@/components/ScrollToTop';
 
 const Index = () => {
@@ -10,6 +11,10 @@ const Index = () => {
       <main className="overflow-x-hidden">
         <LandingSections />
       </main>
+      <div className="hidden md:block">
+        <Footer />
+      </div>
+      <ScrollToTop />
     </div>
   );
 };
