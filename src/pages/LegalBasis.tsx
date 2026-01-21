@@ -507,7 +507,7 @@ const LegalBasis = () => {
                           <span className="inline-block h-2 w-2 rounded-full bg-primary flex-shrink-0" />
                           <h3 className="font-bold text-base sm:text-lg"><span style={{ textDecoration: 'underline' }}>국가계약법 시행령</span></h3>
                         </div>
-                        <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-1 text-xs text-slate-700 self-start sm:self-auto">시행 2025.10.01<span className="text-slate-400">/</span> 대통령령 제35811호</span>
+                        <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-1 text-xs text-slate-700 self-start sm:self-auto">시행 2026.01.02<span className="text-slate-400">/</span> 대통령령 제35947호</span>
                       </div>
                       <div className="rounded-md border border-slate-200 p-4 sm:p-5 bg-slate-50/50">
                         <p className="text-primary font-bold mb-2 text-sm sm:text-base">제26조(수의계약에 의할 수 있는 경우)</p>
@@ -531,7 +531,7 @@ const LegalBasis = () => {
                           <span className="inline-block h-2 w-2 rounded-full bg-primary flex-shrink-0" />
                           <h3 className="font-bold text-base sm:text-lg"><span style={{ textDecoration: 'underline' }}>지방계약법 시행령</span></h3>
                         </div>
-                        <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-1 text-xs text-slate-700 self-start sm:self-auto">시행 2025.10.01<span className="text-slate-400">/</span> 대통령령 제35811호</span>
+                        <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-1 text-xs text-slate-700 self-start sm:self-auto">시행 2026.01.02<span className="text-slate-400">/</span> 대통령령 제35947호</span>
                       </div>
                       <div className="rounded-md border border-slate-200 p-4 sm:p-5">
                         <p className="text-primary font-bold mb-2 text-sm sm:text-base">제25조(수의계약에 의할 수 있는 경우)</p>
