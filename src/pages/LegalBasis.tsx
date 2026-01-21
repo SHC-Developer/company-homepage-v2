@@ -246,7 +246,7 @@ const LegalBasis = () => {
             </div>
             <div className="mt-4 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs text-white/70 font-korean">
               <div className="rounded-md bg-white/5 ring-1 ring-white/10 px-3 py-2">문서유형: 법률근거 안내</div>
-              <div className="rounded-md bg-white/5 ring-1 ring-white/10 px-3 py-2">최종개정: 2025-10-01</div>
+              <div className="rounded-md bg-white/5 ring-1 ring-white/10 px-3 py-2">최종개정: 2025-12-30</div>
             </div>
           </div>
         </section>
