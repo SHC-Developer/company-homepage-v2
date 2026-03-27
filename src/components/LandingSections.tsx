@@ -741,9 +741,9 @@ export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?:
             </div>
           </div>
 
-          {/* 두 카드 영역 — 모바일/태블릿은 dvh 기준으로 카드 높이 축소(푸터 가림 완화) */}
+          {/* 두 카드 영역 — 모바일만 카드 세로 2배, sm 이상은 기존 단계 */}
           <div
-            className="flex w-full shrink-0 items-stretch gap-2 pb-0 sm:gap-3 md:gap-4 lg:gap-5 h-[clamp(7.25rem,22dvh,12.5rem)] sm:h-[clamp(8rem,26dvh,17rem)] md:h-[clamp(9.5rem,32dvh,22rem)] lg:h-[clamp(11rem,42dvh,28rem)] xl:h-[clamp(12.5rem,50vh,36.25rem)]"
+            className="flex w-full shrink-0 items-stretch gap-2 pb-0 sm:gap-3 md:gap-4 lg:gap-5 h-[clamp(14.5rem,44dvh,25rem)] sm:h-[clamp(8rem,26dvh,17rem)] md:h-[clamp(9.5rem,32dvh,22rem)] lg:h-[clamp(11rem,42dvh,28rem)] xl:h-[clamp(12.5rem,50vh,36.25rem)]"
           >
             {/* 카드 1 — 보유면허 및 기술 */}
             <button

@@ -265,13 +265,10 @@ export const Navigation = ({ variant = 'default', forceLightTheme = false, autoH
       */}
       <div className={`${NAV_CONTENT_INSET_CLASS} pt-0`}>
         {/* 
-          네비게이션 바 높이 조정:
-          - 모바일: h-14 (56px) - 한눈에 들어오는 최적 높이
-          - 태블릿: sm:h-20 (80px)
-          - 데스크톱: md:h-28 (112px), lg:h-[120px]
-          - items-center로 모든 요소를 수직 중앙 정렬
+          네비게이션 바 높이: 모바일·태블릿은 낮게, 넓은 데스크톱(2xl)에서만 여유 높이
+          (1440px 미만은 햄버거 — 과도한 세로 공간 방지)
         */}
-        <div className={`flex justify-between items-center h-14 sm:h-20 md:h-28 lg:h-[120px] ${variant === 'legal' ? 'nav-legal' : ''} ${
+        <div className={`flex justify-between items-center h-14 sm:h-16 md:h-[4.25rem] lg:h-20 xl:h-[5.5rem] desktop:h-24 2xl:h-[7.5rem] ${variant === 'legal' ? 'nav-legal' : ''} ${
           isOverLightBackground ? 'nav-light-theme nav-gradient-line' : 'nav-bottom-line'
         }`}>
           {/* 로고와 회사명 */}
@@ -285,7 +282,7 @@ export const Navigation = ({ variant = 'default', forceLightTheme = false, autoH
             - 텍스트의 line-height를 1로 설정하여 정확한 중앙 정렬
             - 데스크톱에서는 기존 크기 유지
           */}
-          <div className="flex-shrink-0 flex items-center gap-2 sm:gap-3 md:gap-4 min-w-0 h-full">
+          <div className="flex-shrink-0 flex items-center gap-1.5 sm:gap-2 md:gap-2.5 lg:gap-3 min-w-0 h-full">
             <img 
               src={
                 isOverLightBackground
@@ -293,12 +290,12 @@ export const Navigation = ({ variant = 'default', forceLightTheme = false, autoH
                   : (isLandingPage ? logo2 : logo3)
               } 
               alt="회사 로고" 
-              className="h-10 w-10 sm:h-16 sm:w-16 md:h-20 md:w-20 flex-shrink-0 object-contain"
+              className="h-9 w-9 sm:h-11 sm:w-11 md:h-12 md:w-12 lg:h-14 lg:w-14 xl:h-[3.75rem] xl:w-[3.75rem] desktop:h-16 desktop:w-16 2xl:h-20 2xl:w-20 flex-shrink-0 object-contain"
             />
             <Link 
               to="/" 
               onClick={() => window.scrollTo(0, 0)} 
-              className={`h-full flex items-center text-base sm:text-lg md:text-2xl lg:text-3xl xl:text-4xl font-semibold font-logo transition-colors duration-300 whitespace-nowrap overflow-hidden text-ellipsis leading-none ${
+              className={`h-full flex items-center text-[10px] leading-snug sm:text-xs md:text-sm lg:text-base xl:text-lg desktop:text-2xl 2xl:text-3xl font-semibold font-logo transition-colors duration-300 whitespace-nowrap overflow-hidden text-ellipsis sm:leading-none ${
                 brandTextClass
               }`}
             >
