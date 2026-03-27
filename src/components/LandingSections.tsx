@@ -1,14 +1,20 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Building2, 
-  Lightbulb, 
-  CheckSquare2, 
-  Shield, 
-  Users, 
-  Search
+import {
+  Building2,
+  Lightbulb,
+  CheckSquare2,
+  Shield,
+  Users,
+  Search,
+  ChevronDown,
+  Phone,
+  MapPin,
+  Zap
 } from 'lucide-react';
+import { NAV_CONTENT_INSET_CLASS } from '@/lib/navContentInset';
 import { withBaseUrl, setupLoopingVideo } from '@/lib/utils';
+import logo2 from '@/assets/logo2.png';
 
 interface CategoryItem {
   id: string;
@@ -32,7 +38,7 @@ const HIGHLIGHT_WORDS: Record<number, string[]> = {
   4: ['성장', '시설사업소'],
 };
 
-export const LandingSections = () => {
+export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?: (index: number) => void }) => {
   const navigate = useNavigate();
   const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
   const sitemapRef = useRef<HTMLDivElement>(null);
@@ -159,6 +165,15 @@ export const LandingSections = () => {
     animationCompletedRef.current[totalSections - 1] = true;
   }, [totalSections]);
 
+  // 다음 슬라이드 이미지 preload
+  useEffect(() => {
+    const nextSlideIdx = activeIndex; // activeIndex=0(Hero)→slides[0], activeIndex=1→slides[1], ...
+    if (nextSlideIdx < slides.length) {
+      const img = new Image();
+      img.src = slides[nextSlideIdx].imageSrc;
+    }
+  }, [activeIndex, slides]);
+
   const handleAnimationComplete = useCallback((index: number) => {
     animationCompletedRef.current[index] = true;
   }, []);
@@ -208,6 +223,7 @@ export const LandingSections = () => {
       
       if (index !== activeIndex && index >= 0 && index < totalSections) {
         setActiveIndex(index);
+        onActiveIndexChange?.(index);
       }
       
       // 인디케이터 표시 여부 (데스크톱에서만, Hero 이후부터 표시)
@@ -381,14 +397,14 @@ export const LandingSections = () => {
     }
   };
 
-  const renderHighlightedText = (text: string, highlightWords: string[], index: number) => {
+  const renderHighlightedText = (text: string, highlightWords: string[], index: number, visible: boolean = true) => {
     if (highlightWords.length === 0) {
       return <>{text}</>;
     }
 
     let result: (string | JSX.Element)[] = [];
     let remainingText = text;
-    
+
     highlightWords.forEach((word, wordIndex) => {
       const parts = remainingText.split(word);
       if (parts.length > 1) {
@@ -396,7 +412,19 @@ export const LandingSections = () => {
           result.push(parts[0]);
         }
         result.push(
-          <span key={`${index}-${wordIndex}`} style={{ fontSize: 'clamp(1.5rem, 3vw + 0.75rem, 60pt)', color: '#2686EB' }}>
+          <span
+            key={`${index}-${wordIndex}`}
+            style={{
+              fontSize: 'clamp(1.5rem, 3vw + 0.75rem, 60pt)',
+              color: '#ffffff',
+              fontWeight: 800,
+              textShadow: '0 0 20px rgba(0,0,0,0.5)',
+              display: 'inline-block',
+              opacity: visible ? 1 : 0,
+              transform: visible ? 'scale(1)' : 'scale(0.85)',
+              transition: 'opacity 0.4s ease 0.28s, transform 0.4s ease 0.48s',
+            }}
+          >
             {word}
           </span>
         );
@@ -436,39 +464,101 @@ export const LandingSections = () => {
     { id: 'portfolio', label: '수행 실적', icon: <Search className="w-8 h-8" />, onClick: () => handleCategoryClick('/portfolio') },
   ];
 
-  const SlideComponent: React.FC<{ 
-    slide: SlideItem; 
-    index: number; 
-    isActive: boolean; 
+  const SLIDE_LAYOUTS = [
+    { justify: 'justify-center',             align: 'items-start',  textAlign: 'text-left',   bgPos: 'right top',    mobileBgPos: '30% top',      panFrom: 'scale(1.0) translate(2%, 1%)',   panTo: 'scale(1.08) translate(-2%, -1%)', hiddenTransform: 'translate(-24px, -12px)' },
+    { justify: 'justify-center',             align: 'items-center', textAlign: 'text-center', bgPos: 'center',       mobileBgPos: 'center',       panFrom: 'scale(1.0) translate(0, 2%)',    panTo: 'scale(1.08) translate(0, -2%)',   hiddenTransform: 'translate(0, -24px)'    },
+    { justify: 'justify-center',             align: 'items-end',    textAlign: 'text-right',  bgPos: 'left center',  mobileBgPos: 'left center',  panFrom: 'scale(1.0) translate(-2%, 1%)',  panTo: 'scale(1.08) translate(2%, -1%)', hiddenTransform: 'translate(24px, -12px)'  },
+    { justify: 'justify-end pb-32 sm:pb-40', align: 'items-start',  textAlign: 'text-left',   bgPos: 'right center', mobileBgPos: 'right center', panFrom: 'scale(1.0) translate(-1%, -2%)', panTo: 'scale(1.08) translate(1%, 2%)',  hiddenTransform: 'translate(24px, 12px)'  },
+    { justify: 'justify-end pb-32 sm:pb-40', align: 'items-center', textAlign: 'text-center', bgPos: 'center',       mobileBgPos: 'center',       panFrom: 'scale(1.0) translate(2%, -1%)',  panTo: 'scale(1.08) translate(-2%, 1%)', hiddenTransform: 'translate(-24px, 12px)' },
+  ];
+
+  const SlideComponent: React.FC<{
+    slide: SlideItem;
+    index: number;
+    isActive: boolean;
     onAnimationComplete: () => void;
     onAnimationReset: () => void;
     isMobile: boolean;
   }> = ({ slide, index, isActive, onAnimationComplete, onAnimationReset, isMobile }) => {
     const [visible, setVisible] = useState(false);
+    const [fadeOverlay, setFadeOverlay] = useState(true);
+    const [bgZoomed, setBgZoomed] = useState(false);
+    const layout = SLIDE_LAYOUTS[index % SLIDE_LAYOUTS.length];
+    const effectiveBgPos = isMobile ? layout.mobileBgPos : layout.bgPos;
 
     useEffect(() => {
-      // 터치/PC 모두 동일한 애니메이션/잠금 동작 (완료 후에만 다음 섹션 이동 가능)
       if (isActive) {
+        // 페이드인: 검은 오버레이를 먼저 띄우고 바로 fade-out
+        setFadeOverlay(true);
+        setBgZoomed(false); // scale 리셋 (1.0 상태 확보)
+        const fadeTimer = setTimeout(() => setFadeOverlay(false), 30);
         setVisible(true);
-        const timer = setTimeout(() => {
+        // 두 프레임 후 scale 증가 → transition 발동
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => setBgZoomed(true));
+        });
+        const animTimer = setTimeout(() => {
           onAnimationComplete();
         }, 1000);
-        return () => clearTimeout(timer);
+        return () => { clearTimeout(fadeTimer); clearTimeout(animTimer); };
       } else {
         setVisible(false);
+        setFadeOverlay(true);
+        setBgZoomed(false);
         onAnimationReset();
       }
     }, [isActive, onAnimationComplete, onAnimationReset]);
 
     return (
       <div className="relative w-full overflow-hidden bg-black" style={{ height: 'calc(var(--vh, 1vh) * 100)' }}>
-        <div className="absolute inset-0" style={{ backgroundImage: `url(${slide.imageSrc})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
-        <div className="relative h-full flex flex-col items-center justify-center text-white px-4 text-center">
-          <div className={`transition-all duration-1000 transform ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            <h2 className="font-korean font-semibold leading-relaxed mb-6 drop-shadow-2xl" style={{ color: '#ffffff', fontSize: 'clamp(1.25rem, 2.5vw + 0.5rem, 45pt)' }}>
-              {renderHighlightedText(slide.text, slide.highlightWords, index)}
-            </h2>
+        {/* 동적 배경 애니메이션 */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url(${slide.imageSrc})`,
+            backgroundSize: 'cover',
+            backgroundPosition: effectiveBgPos,
+            transform: bgZoomed ? layout.panTo : layout.panFrom,
+            transition: 'transform 3.5s cubic-bezier(0.2, 0.6, 0.2, 1), filter 1.2s ease-out',
+            filter: bgZoomed ? 'blur(0px)' : 'blur(4px)',
+          }}
+        />
+        {/* 텍스트 출현과 동기된 추가 오버레이 애니메이션 */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: isActive && visible ? 'radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.1) 100%)' : 'radial-gradient(ellipse at center, rgba(0,0,0,0) 0%, rgba(0,0,0,0.15) 100%)',
+            transition: 'background 1.2s ease-out',
+            zIndex: 5,
+          }}
+        />
+        <div className="absolute inset-0 bg-black/40" />
+        {/* 하단 그라디언트 — 인디케이터 가독성 */}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-28 pointer-events-none z-10"
+          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.45), transparent)' }}
+        />
+        {/* 페이드 전환 오버레이 */}
+        <div
+          className="absolute inset-0 bg-black pointer-events-none z-20"
+          style={{
+            opacity: fadeOverlay ? 1 : 0,
+            transition: fadeOverlay ? 'none' : 'opacity 0.5s ease',
+          }}
+        />
+        <div className={`relative z-10 h-full flex flex-col text-white ${layout.justify}`}>
+          <div className={`w-[95%] sm:w-[90%] md:w-[85%] mx-auto px-2 sm:px-4 md:px-6 lg:px-8 flex flex-col ${layout.align}`}>
+            <div
+              className={`transition-all duration-1000 ${layout.textAlign}`}
+              style={{
+                opacity: visible ? 1 : 0,
+                transform: visible ? 'translate(0, 0)' : layout.hiddenTransform,
+              }}
+            >
+              <h2 className="font-korean font-thin leading-relaxed mb-6 drop-shadow-2xl" style={{ color: '#ffffff', fontSize: 'clamp(1.25rem, 2.5vw + 0.5rem, 45pt)' }}>
+                {renderHighlightedText(slide.text, slide.highlightWords, index, visible)}
+              </h2>
+            </div>
           </div>
         </div>
       </div>
@@ -486,9 +576,9 @@ export const LandingSections = () => {
       }}
     >
       {/* Side Indicator */}
-      {showIndicator && (
+      {showIndicator && activeIndex < totalSections - 1 && (
         <nav
-          className="fixed right-3 sm:right-6 lg:right-8 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3 sm:gap-5 lg:gap-6 pr-[env(safe-area-inset-right)]"
+          className="fixed bottom-5 sm:bottom-7 left-1/2 -translate-x-1/2 z-50 flex flex-row gap-3 sm:gap-4 pb-[env(safe-area-inset-bottom)]"
           style={{ touchAction: 'manipulation' }}
           aria-label="페이지 이동"
         >
@@ -497,14 +587,14 @@ export const LandingSections = () => {
               key={i}
               type="button"
               onClick={() => scrollToSection(i)}
-              className="group relative flex items-center justify-end p-2 sm:p-1.5"
+              className="group relative flex items-center justify-center p-1.5"
               aria-label={`${i + 1}번째 섹션으로 이동`}
             >
               <div
-                className={`w-2 h-2 sm:w-2.5 sm:h-2.5 lg:w-2 lg:h-2 rounded-full transition-all duration-500 border border-white/40 ${
+                className={`h-2 rounded-full transition-all duration-500 ${
                   i === activeIndex
-                    ? 'bg-blue-500 scale-150 border-transparent shadow-[0_0_10px_rgba(59,130,246,0.8)]'
-                    : 'bg-transparent'
+                    ? 'w-5 bg-white'
+                    : 'w-2 bg-white/40'
                 }`}
               />
             </button>
@@ -527,15 +617,65 @@ export const LandingSections = () => {
                 loop={false}
                 style={{ pointerEvents: 'none' }}
               />
-              <div className="absolute inset-0 bg-black/10 z-10"></div>
+              <div className="absolute inset-0 z-10" style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.2) 55%, rgba(0,0,0,0.05) 100%)' }}></div>
             </div>
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-primary to-primary-hover" style={{ backgroundImage: `linear-gradient(135deg, rgba(13, 42, 74, 0.8), rgba(30, 111, 217, 0.8))` }} />
           )}
         </div>
-        <div className="absolute bottom-4 right-4 sm:bottom-8 sm:right-8 z-20 text-right pointer-events-none px-4">
-          <p className="text-[10pt] sm:text-[16pt] text-white font-korean drop-shadow-lg">25.10.25 올림픽대교 전경</p>
-          <p className="text-[7pt] sm:text-[10pt] text-white/80 font-korean drop-shadow-md mt-2">© 대한민국상이군경회시설사업소. All rights reserved.</p>
+        {/* Hero Text Overlay */}
+        <div className="absolute inset-0 z-20 flex flex-col justify-start pt-[32vh] text-white">
+          <div className="w-[95%] sm:w-[90%] md:w-[85%] mx-auto px-2 sm:px-4 md:px-6 lg:px-8">
+          <div className="max-w-lg">
+            <p className="hero-text-slide-down text-[8px] sm:text-xs tracking-[0.15em] sm:tracking-[0.2em] italic text-white/60 mb-3 whitespace-nowrap">
+              Engineering Safety. Inspiring Innovation.
+            </p>
+            <h1
+              className="hero-text-slide-down font-korean font-light drop-shadow-lg mb-3 pb-2 border-b border-white/40 inline-block"
+              style={{ fontSize: 'clamp(1.2rem, 2vw + 0.5rem, 2.2rem)' }}
+            >
+              안전한 대한민국을 만듭니다
+            </h1>
+            <p className="hero-text-slide-down text-xs sm:text-sm text-white/75 font-korean mb-6 leading-relaxed">
+              20년의 기술력으로<br />국가 시설물의 안전을 책임집니다
+            </p>
+            <div
+              className="hero-text-slide-down flex gap-4"
+              style={{ animationDelay: '1.4s' }}
+            >
+              <button
+                onClick={() => navigate('/portfolio')}
+                className="hero-link text-xs sm:text-sm text-white/75 font-korean hover:text-white transition-colors duration-200"
+              >
+                수행실적 보기 →
+              </button>
+              <button
+                onClick={() => navigate('/greeting')}
+                className="hero-link text-xs sm:text-sm text-white/75 font-korean hover:text-white transition-colors duration-200"
+              >
+                회사 소개 →
+              </button>
+            </div>
+          </div>
+          </div>
+        </div>
+        {/* Scroll Down Indicator */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 animate-bounce pointer-events-none">
+          <span className="text-[7pt] text-white/40 tracking-[0.2em] uppercase">Scroll</span>
+          <ChevronDown className="w-4 h-4 text-white/40" />
+        </div>
+        {/* Caption - 우측 세로 텍스트 */}
+        <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 z-20 pointer-events-none">
+          <p
+            className="text-xs sm:text-sm text-white/65 font-korean tracking-[0.12em]"
+            style={{ writingMode: 'vertical-rl' }}
+          >
+            25.10.25 올림픽대교 전경
+          </p>
+        </div>
+        {/* Copyright */}
+        <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 z-20 text-right pointer-events-none">
+          <p className="text-[7pt] sm:text-[8pt] text-white/35 font-korean">© 대한민국상이군경회시설사업소.</p>
         </div>
       </section>
 
@@ -554,45 +694,202 @@ export const LandingSections = () => {
         ))}
 
         {/* 3. Sitemap Footer Section (Index 6) */}
-        <div 
+        <div
           ref={sitemapRef}
-          className="relative w-full flex flex-col justify-center items-center overflow-hidden"
-          style={{ background: '#0B1C2B', height: 'calc(var(--vh, 1vh) * 100)' }}
+          className="relative w-full flex flex-col overflow-hidden"
+          style={{
+            background: 'radial-gradient(ellipse at 50% 45%, #122438 0%, #0B1C2B 55%, #060f18 100%)',
+            height: 'calc(var(--vh, 1vh) * 100)',
+          }}
         >
-          <div className="relative z-10 w-full max-w-7xl mx-auto px-6 flex flex-col items-center gap-8 lg:gap-12">
-            <div
-              ref={companyNameRef}
-              className={`hidden lg:block text-center transition-all duration-1000 transform ${
-                sitemapVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-              }`}
-            >
-              <h1 className="text-white font-light tracking-tighter mb-2 font-logo" style={{ fontSize: 'clamp(1.25rem, 3vw + 0.5rem, 3.75rem)' }}>
-                대한민국상이군경회<span className="font-light" style={{ color: '#2686EB' }}>시설사업소</span>
-              </h1>
-            </div>
-            <div className="w-full grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 border-t border-b border-white/10">
-              {categories.map((category, index) => (
-                <div
-                  key={category.id}
-                  onClick={category.onClick}
-                  className={`group relative flex flex-col items-center justify-center py-12 px-4 cursor-pointer hover:bg-white/5 transition-all duration-700 border-white/10 ${sitemapVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'} ${
-                    (index + 1) % 2 !== 0 ? 'border-r' : (index + 1) % 3 !== 0 ? 'md:border-r lg:border-r' : (index + 1) % 6 !== 0 ? 'lg:border-r' : ''
-                  }`}
-                  style={{ transitionDelay: `${index * 100}ms` }}
-                >
-                  <div className="text-white/60 group-hover:text-blue-400 group-hover:scale-110 transition-all duration-300 mb-6">
-                    {React.cloneElement(category.icon as React.ReactElement, { size: 40, strokeWidth: 1.2, className: "xl:w-[60px] xl:h-[60px]" })}
-                  </div>
-                  <span className="text-white/80 group-hover:text-white text-center font-medium tracking-tight text-sm lg:text-base xl:text-xl xl:leading-7 font-korean">
-                    {category.label}
-                  </span>
-                  <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 text-white/20 font-thin text-xl pointer-events-none">+</div>
-                  <div className="absolute bottom-0 right-0 translate-y-1/2 translate-x-1/2 text-white/20 font-thin text-xl pointer-events-none">+</div>
+          {/* 중앙 콘텐츠 래퍼 (타이틀 + 카드) — Navigation과 동일 가로 룰(sm/md/lg) */}
+          <div
+            className={`relative z-10 flex flex-1 flex-col justify-center ${NAV_CONTENT_INSET_CLASS}`}
+          >
+
+          {/* 상단 타이틀 영역 — 모바일은 네비~주요사업 간격 상대적으로 촘촘히 */}
+          <div className="flex w-full flex-col items-stretch pt-14 sm:pt-28 pb-5 sm:pb-6">
+            <div className="w-full">
+              {/* 사업분야 — 모바일: 카드행과 동일 너비(w-full) · sm+: 가로 0.8배 */}
+              <div className="mx-auto w-full max-w-full sm:w-[80%]">
+                {/* 모바일 2×2 / sm+ 4열 한 줄; 모바일은 간격·pill 축소 */}
+                <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-4 lg:gap-5">
+                  {['안전진단전문기관', '엔지니어링사업', '건설엔지니어링업', '초경량비행장치사용사업'].map((area, i) => (
+                    <span
+                      key={area}
+                      className="box-border flex min-h-[2.4rem] min-w-0 w-full items-center justify-center overflow-hidden rounded-2xl border border-white/20 bg-white/5 px-1.5 py-1.5 font-korean font-light text-white/90 max-sm:min-h-[2.35rem] sm:min-h-[2.75rem] sm:rounded-full sm:px-2 sm:py-2 md:px-2.5"
+                      style={{
+                        opacity: sitemapVisible ? 1 : 0,
+                        transform: sitemapVisible ? 'translateY(0)' : 'translateY(8px)',
+                        transition: `opacity 0.6s ease ${0.08 + i * 0.12}s, transform 0.6s ease ${0.08 + i * 0.12}s`,
+                      }}
+                    >
+                      <span
+                        className="block min-w-0 max-w-full whitespace-nowrap text-center text-[clamp(0.5rem,2.4vw+0.26rem,0.74rem)] leading-tight tracking-tight sm:text-[clamp(0.48rem,0.65vw+0.28rem,0.82rem)] md:text-[clamp(0.52rem,0.55vw+0.32rem,0.88rem)] lg:text-[clamp(0.56rem,0.48vw+0.36rem,0.94rem)]"
+                      >
+                        {area}
+                      </span>
+                    </span>
+                  ))}
                 </div>
-              ))}
+                {/* 하단 구분선 — 주요사업 블록 너비에 맞춤 */}
+                <div
+                  className="mt-6 h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent sm:mt-10"
+                  style={{ maxWidth: '100%', width: sitemapVisible ? '100%' : '0%', transition: 'width 0.9s ease 0.55s' }}
+                />
+              </div>
             </div>
           </div>
-          <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '100px 100px' }} />
+
+          {/* 두 카드 영역 — 좌우 패딩은 NAV_CONTENT_INSET_CLASS(네비와 동일) */}
+          <div
+            className="flex w-full items-stretch gap-3 pb-0 sm:gap-4 lg:gap-5"
+            style={{
+              height: 'clamp(200px, 54vh, 580px)',
+            }}
+          >
+            {/* 카드 1 — 보유면허 및 기술 */}
+            <button
+              onClick={() => handleCategoryClick('/greeting', 'license')}
+              className="group relative flex-1 overflow-hidden rounded-xl sm:rounded-2xl text-left focus:outline-none"
+              style={{
+                opacity: sitemapVisible ? 1 : 0,
+                transform: sitemapVisible ? 'translateY(0)' : 'translateY(20px)',
+                transition: 'opacity 0.65s ease 0.2s, transform 0.65s ease 0.2s',
+              }}
+            >
+              {/* 배경: performance4 현장 사진 */}
+              <div
+                className="absolute inset-0 bg-center bg-cover scale-100 group-hover:scale-105 transition-transform duration-700 ease-out"
+                style={{ backgroundImage: `url('/portfolio/performance4.jpg')` }}
+              />
+              {/* 다크 오버레이 */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0B1C2B]/88 via-[#0B1C2B]/25 to-[#0B1C2B]/5 group-hover:via-[#0B1C2B]/35 transition-all duration-500" />
+              {/* 상단 블러 오버레이 */}
+              <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/50 to-transparent backdrop-blur-[2px]" style={{ WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)', maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)' }} />
+              {/* 상단 배지 */}
+              <div className="absolute top-4 sm:top-5 left-4 sm:left-6">
+                <span className="inline-block px-2.5 py-1 rounded-full border border-white/30 bg-white/10 text-white/85 text-xs font-korean tracking-wide backdrop-blur-sm">
+                  자격 &amp; 인증
+                </span>
+              </div>
+              {/* 하단 텍스트 - 짙은 배경 추가 */}
+              <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6 flex items-end justify-between bg-gradient-to-t from-[#0B1C2B]/95 via-[#0B1C2B]/60 to-transparent pt-10">
+                <div>
+                  <h3 className="font-korean font-semibold text-white text-sm sm:text-xl lg:text-2xl leading-tight whitespace-nowrap">
+                    보유면허 및 기술
+                  </h3>
+                  <p className="mt-1 text-white/70 text-xs sm:text-sm font-korean">회사소개 바로가기</p>
+                </div>
+                <div className="ml-3 w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-white/25 flex items-center justify-center bg-white/8 group-hover:bg-white group-hover:border-white transition-all duration-300 shrink-0">
+                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white group-hover:text-[#0B1C2B] transition-colors duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </button>
+
+            {/* 카드 2 — 지명원 다운로드 */}
+            <a
+              href="/%EB%8C%80%ED%95%9C%EB%AF%BC%EA%B5%AD%EC%83%81%EC%9D%B4%EA%B5%B0%EA%B2%BD%ED%9A%8C%EC%8B%9C%EC%84%A4%EC%82%AC%EC%97%85%EC%86%8C%20%EC%A7%80%EB%AA%85%EC%9B%90.pdf"
+              download="대한민국상이군경회시설사업소 지명원.pdf"
+              className="group relative flex-1 overflow-hidden rounded-xl sm:rounded-2xl text-left focus:outline-none"
+              style={{
+                opacity: sitemapVisible ? 1 : 0,
+                transform: sitemapVisible ? 'translateY(0)' : 'translateY(20px)',
+                transition: 'opacity 0.65s ease 0.35s, transform 0.65s ease 0.35s',
+                textDecoration: 'none',
+              }}
+            >
+              {/* 배경: performance11 현장 사진 */}
+              <div
+                className="absolute inset-0 bg-center bg-cover scale-100 group-hover:scale-105 transition-transform duration-700 ease-out"
+                style={{ backgroundImage: `url('/portfolio/performance11.jpg')` }}
+              />
+              {/* 다크 오버레이 */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#122A4A]/88 via-[#122A4A]/25 to-[#122A4A]/5 group-hover:via-[#122A4A]/35 transition-all duration-500" />
+              {/* 상단 블러 오버레이 */}
+              <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/50 to-transparent backdrop-blur-[2px]" style={{ WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)', maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)' }} />
+              {/* 상단 배지 */}
+              <div className="absolute top-4 sm:top-5 left-4 sm:left-6">
+                <span className="inline-block px-2.5 py-1 rounded-full border border-white/30 bg-white/10 text-white/85 text-xs font-korean tracking-wide backdrop-blur-sm">
+                  PDF 다운로드
+                </span>
+              </div>
+              {/* 하단 텍스트 - 짙은 배경 추가 */}
+              <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6 flex items-end justify-between bg-gradient-to-t from-[#122A4A]/95 via-[#122A4A]/60 to-transparent pt-10">
+                <div>
+                  <h3 className="font-korean font-semibold text-white text-sm sm:text-xl lg:text-2xl leading-tight whitespace-nowrap">
+                    지명원 다운로드
+                  </h3>
+                  <p className="mt-1 text-white/70 text-xs sm:text-sm font-korean">회사 소개 자료</p>
+                </div>
+                <div className="ml-3 w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-white/25 flex items-center justify-center bg-white/8 group-hover:bg-[#1D66B3] group-hover:border-[#1D66B3] transition-all duration-300 shrink-0">
+                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white transition-colors duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </div>
+              </div>
+            </a>
+          </div>
+
+          </div>{/* /중앙 콘텐츠 래퍼 */}
+
+          {/* Footer 스트립: 전폭 구분선 + 본문은 네비와 동일 너비 */}
+          <div className="relative z-10 mt-2 w-full border-t border-white/10">
+            <div className={`${NAV_CONTENT_INSET_CLASS} py-5 sm:py-6`}>
+            {/* 데스크톱·태블릿 — 그리드로 주소 열을 남은 폭 전체 사용 + 우측 정렬·반응형 글자 */}
+            <div className="hidden sm:grid sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start sm:gap-x-3 md:gap-x-5 text-white">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 md:gap-x-5">
+                <div className="flex items-center gap-2 whitespace-nowrap text-[clamp(0.6875rem,0.45vw+0.48rem,0.9375rem)]">
+                  <Phone className="w-4 h-4 text-white flex-shrink-0" strokeWidth={1.75} />
+                  <span className="font-korean font-medium">TEL</span>
+                  <span className="font-english font-medium">02)572-6218</span>
+                </div>
+                <div className="flex items-center gap-2 whitespace-nowrap text-[clamp(0.6875rem,0.45vw+0.48rem,0.9375rem)]">
+                  <Phone className="w-4 h-4 text-white flex-shrink-0" strokeWidth={1.75} />
+                  <span className="font-korean font-medium">FAX</span>
+                  <span className="font-english font-medium">050-5115-9274</span>
+                </div>
+              </div>
+              <div className="flex min-w-0 justify-end text-right">
+                <div className="flex max-w-full items-start justify-end gap-2">
+                  <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-white" strokeWidth={1.75} />
+                  <span className="min-w-0 max-w-full font-korean font-medium leading-snug text-[clamp(0.58rem,0.5vw+0.36rem,0.875rem)] md:text-[clamp(0.625rem,0.42vw+0.4rem,0.9rem)] lg:text-[clamp(0.6875rem,0.35vw+0.45rem,0.9375rem)] lg:whitespace-nowrap">
+                    경기도 성남시 분당구 판교역로 230, 907호 (삼환하이펙스B동, 삼평동)
+                  </span>
+                </div>
+              </div>
+            </div>
+            {/* 모바일: 1행 TEL·FAX 나란히 → 2행 주소 전체 폭 */}
+            <div className="sm:hidden flex flex-col gap-2.5 text-white text-xs leading-snug">
+              <div className="flex flex-row flex-wrap items-center gap-x-5 gap-y-1">
+                <div className="flex items-center gap-1.5 whitespace-nowrap">
+                  <Phone className="w-3.5 h-3.5 text-white flex-shrink-0" strokeWidth={2} />
+                  <span className="font-korean font-medium">TEL</span>
+                  <span className="font-english font-medium">02)572-6218</span>
+                </div>
+                <div className="flex items-center gap-1.5 whitespace-nowrap">
+                  <Phone className="w-3.5 h-3.5 text-white flex-shrink-0" strokeWidth={2} />
+                  <span className="font-korean font-medium">FAX</span>
+                  <span className="font-english font-medium">050-5115-9274</span>
+                </div>
+              </div>
+              <div className="flex w-full items-start gap-2">
+                <MapPin className="w-3.5 h-3.5 text-white flex-shrink-0 mt-0.5" strokeWidth={2} />
+                <span className="min-w-0 flex-1 font-korean font-medium text-[11px] leading-snug whitespace-normal break-words">
+                  경기도 성남시 분당구 판교역로 230, 907호 (삼환하이펙스B동, 삼평동)
+                </span>
+              </div>
+            </div>
+            </div>
+          </div>
+
+          {/* 비네팅 */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{ background: 'radial-gradient(ellipse at 50% 45%, transparent 35%, rgba(4, 10, 17, 0.55) 100%)' }}
+          />
         </div>
       </div>
     </div>

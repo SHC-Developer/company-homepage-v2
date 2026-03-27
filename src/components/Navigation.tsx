@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { NAV_CONTENT_INSET_CLASS } from '@/lib/navContentInset';
 import logo2 from '@/assets/logo2.png';
 import logo3 from '@/assets/logo3.png';
 
@@ -260,9 +261,9 @@ export const Navigation = ({ variant = 'default', forceLightTheme = false, autoH
         2. Tailwind 브레이크포인트: sm(640px), md(768px), lg(1024px), xl(1280px)
         3. 모바일에서 네비게이션 바 높이 최소화: h-14 (56px)로 설정하여 한눈에 들어오도록
         4. 로고와 텍스트 크기 조정: 모바일에서 작게, 데스크톱에서 크게
-        5. 패딩 최적화: 모바일에서 px-2 (8px), 큰 화면에서 px-4, px-6 등으로 증가
+        5. 가로 룰: src/lib/navContentInset.ts 의 NAV_CONTENT_INSET_CLASS와 동기화
       */}
-      <div className="w-[95%] sm:w-[90%] md:w-[85%] mx-auto px-2 sm:px-4 md:px-6 lg:px-8 pt-0">
+      <div className={`${NAV_CONTENT_INSET_CLASS} pt-0`}>
         {/* 
           네비게이션 바 높이 조정:
           - 모바일: h-14 (56px) - 한눈에 들어오는 최적 높이
@@ -297,7 +298,7 @@ export const Navigation = ({ variant = 'default', forceLightTheme = false, autoH
             <Link 
               to="/" 
               onClick={() => window.scrollTo(0, 0)} 
-              className={`h-full flex items-center text-base sm:text-lg md:text-2xl lg:text-3xl xl:text-4xl font-bold font-logo transition-colors duration-300 whitespace-nowrap overflow-hidden text-ellipsis leading-none ${
+              className={`h-full flex items-center text-base sm:text-lg md:text-2xl lg:text-3xl xl:text-4xl font-semibold font-logo transition-colors duration-300 whitespace-nowrap overflow-hidden text-ellipsis leading-none ${
                 brandTextClass
               }`}
             >

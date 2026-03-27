@@ -8,21 +8,16 @@ export const GreetingSection = () => {
   const [videoError, setVideoError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [showBottomText, setShowBottomText] = useState(true);
+  const [cinematicPhase, setCinematicPhase] = useState<0 | 1 | 2>(0);
   const [visibleParagraphs, setVisibleParagraphs] = useState<boolean[]>([false, false, false, false, false, false]);
   const [visibleTitle, setVisibleTitle] = useState(false);
   const [visibleSubtitle, setVisibleSubtitle] = useState(false);
-  const [visiblePhilosophyTitle, setVisiblePhilosophyTitle] = useState(false);
-  const [visiblePhilosophyContent, setVisiblePhilosophyContent] = useState(false);
-  const [visiblePhilosophyCards, setVisiblePhilosophyCards] = useState<boolean[]>([false, false, false, false]);
   const [visibleCoreValues, setVisibleCoreValues] = useState<boolean[]>([false, false, false, false, false]);
   const [visibleHistoryTitle, setVisibleHistoryTitle] = useState(false);
   const [visibleHistoryItems, setVisibleHistoryItems] = useState<boolean[]>([false, false, false, false, false, false, false, false, false, false, false, false]);
   const paragraphRefs = useRef<(HTMLDivElement | null)[]>([]);
   const titleRef = useRef<HTMLDivElement>(null);
   const subtitleRef = useRef<HTMLDivElement>(null);
-  const philosophyTitleRef = useRef<HTMLDivElement>(null);
-  const philosophyContentRef = useRef<HTMLDivElement>(null);
-  const philosophyCardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const coreValueRefs = useRef<(HTMLDivElement | null)[]>([]);
   const historyTitleRef = useRef<HTMLDivElement>(null);
   const historyItemRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -48,6 +43,23 @@ export const GreetingSection = () => {
         // 자동 재생이 실패해도 에러로 처리하지 않음 (브라우저 정책)
       },
     });
+  }, []);
+
+  // 시네마틱 자막 사이클링 — 영화 자막처럼 문구가 순차 등장 후 반복
+  useEffect(() => {
+    // 각 막이 유지되는 시간 (ms): Act1=5s, Act2=5s, Act3=6s
+    const durations: [number, number, number] = [5000, 5000, 6000];
+    let current: 0 | 1 | 2 = 0;
+    let timerId: ReturnType<typeof setTimeout>;
+
+    const advance = () => {
+      current = ((current + 1) % 3) as 0 | 1 | 2;
+      setCinematicPhase(current);
+      timerId = setTimeout(advance, durations[current]);
+    };
+
+    timerId = setTimeout(advance, durations[0]);
+    return () => clearTimeout(timerId);
   }, []);
 
   // COMPANY HISTORY: no range filtering, continuous timeline (latest first)
@@ -194,40 +206,6 @@ export const GreetingSection = () => {
     });
   }, []);
 
-  // Philosophy Title 애니메이션 감지
-  useEffect(() => {
-    return observeSingle(philosophyTitleRef, setVisiblePhilosophyTitle, {
-      threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px',
-    });
-  }, []);
-
-  // Philosophy Content 애니메이션 감지
-  useEffect(() => {
-    return observeSingle(philosophyContentRef, setVisiblePhilosophyContent, {
-      threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px',
-    });
-  }, []);
-
-  // Philosophy Cards 애니메이션 감지
-  useEffect(() => {
-    return observeMany(
-      philosophyCardRefs,
-      (index, isVisible) => {
-        setVisiblePhilosophyCards((prev) => {
-          const next = [...prev];
-          next[index] = isVisible;
-          return next;
-        });
-      },
-      {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px',
-      }
-    );
-  }, []);
-
   // Core Values 애니메이션 감지
   useEffect(() => {
     return observeMany(
@@ -292,10 +270,17 @@ export const GreetingSection = () => {
 
   return (
     <div className="w-full overflow-x-hidden">
-      {/* 영상 배경 섹션 */}
-      <section className="relative w-full overflow-hidden h-[100svh] md:h-screen">
-        {/* 로컬 배경 비디오 */}
-        <div className="absolute inset-0 z-0">
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          시네마틱 히어로 — 100svh 고정, 시간 기반 자막 애니메이션
+          배경 영상이 재생되는 동안 영화 자막처럼 문구가 순차 등장
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <section className="relative w-full h-[100svh] overflow-hidden">
+
+        {/* 딥 네이비 배경 */}
+        <div className="absolute inset-0 z-0 bg-[#071420]" />
+
+        {/* 비디오 레이어 — 영상이 항상 재생됨 */}
+        <div className="absolute inset-0 z-[1]">
           {!videoError ? (
             <div className="relative w-full h-full">
               <video
@@ -306,197 +291,140 @@ export const GreetingSection = () => {
                 muted
                 playsInline
                 loop={false}
+                style={{ pointerEvents: 'none' }}
+              />
+              {/* 텍스트 가독성을 위한 오버레이 — 하단 강화 */}
+              <div
+                className="absolute inset-0 z-10"
                 style={{
-                  pointerEvents: 'none',
+                  background: 'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.35) 55%, rgba(7,20,32,0.85) 100%)',
                 }}
               />
-              {/* 비디오 위에 오버레이 */}
-              <div className="absolute inset-0 bg-black/10 z-10"></div>
             </div>
           ) : (
-            /* 대체 배경 */
-            <div 
-              className="w-full h-full bg-gradient-to-br from-primary to-primary-hover"
-              style={{
-                backgroundImage: `linear-gradient(135deg, rgba(13, 42, 74, 0.8), rgba(30, 111, 217, 0.8))`,
-              }}
+            <div
+              className="w-full h-full"
+              style={{ backgroundImage: 'linear-gradient(135deg, rgba(13,42,74,0.95), rgba(30,111,217,0.7))' }}
             />
           )}
         </div>
 
-        {/* 우측 하단 텍스트 */}
+        {/* ABOUT 레이블 — 좌상단 */}
+        <div className="absolute top-24 left-8 md:left-16 z-20">
+          <span className="text-[10px] tracking-[0.35em] text-white/50 uppercase">ABOUT</span>
+          <div className="mt-1.5 h-px w-8 bg-[#1D66B3]" />
+        </div>
+
+        {/* ── Act 1 — 시설사업소 타이틀 (페이지 진입 ~ 5초) ── */}
+        <div
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center px-6"
+          style={{
+            opacity: cinematicPhase === 0 ? 1 : 0,
+            transition: 'opacity 1.4s ease-in-out',
+          }}
+        >
+          <div className="flex flex-col items-center gap-4">
+            <p
+              className="tracking-[0.4em] text-[#1D66B3] font-korean"
+              style={{ fontSize: 'clamp(0.65rem, 1.2vw, 0.85rem)' }}
+            >
+              대한민국상이군경회
+            </p>
+            <h1
+              className="font-logo text-white leading-[1.2]"
+              style={{
+                fontSize: 'clamp(2.2rem, 6.5vw, 5rem)',
+                textShadow: '0 2px 32px rgba(0,0,0,0.65)',
+              }}
+            >
+              시설사업소
+            </h1>
+            <div className="w-10 h-px bg-[#1D66B3]" />
+            <p
+              className="text-white/60 tracking-widest"
+              style={{ fontSize: 'clamp(0.7rem, 1.3vw, 0.9rem)', letterSpacing: '0.2em' }}
+            >
+              Engineering Safety. Inspiring Innovation.
+            </p>
+          </div>
+        </div>
+
+        {/* ── Act 2 — 인사말 1행 (5~10초) ── */}
+        <div
+          className="absolute inset-0 z-20 flex items-center justify-center text-center px-6 md:px-20"
+          style={{
+            opacity: cinematicPhase === 1 ? 1 : 0,
+            transition: 'opacity 1.4s ease-in-out',
+          }}
+        >
+          <p
+            className="font-korean text-white font-light"
+            style={{
+              fontSize: 'clamp(1.3rem, 3.8vw, 2.8rem)',
+              letterSpacing: '0.06em',
+              lineHeight: '1.7',
+              textShadow: '0 2px 28px rgba(0,0,0,0.6)',
+            }}
+          >
+            국가유공자의 높은 이상을 바탕으로,
+          </p>
+        </div>
+
+        {/* ── Act 3 — 인사말 2행 + 영문 (10~16초) ── */}
+        <div
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center px-6 md:px-20 gap-7"
+          style={{
+            opacity: cinematicPhase === 2 ? 1 : 0,
+            transition: 'opacity 1.4s ease-in-out',
+          }}
+        >
+          <p
+            className="font-korean text-white font-light"
+            style={{
+              fontSize: 'clamp(1.15rem, 3.4vw, 2.5rem)',
+              letterSpacing: '0.05em',
+              lineHeight: '1.9',
+              textShadow: '0 2px 28px rgba(0,0,0,0.6)',
+            }}
+          >
+            공명정대하고 투명한 조직운영으로<br />
+            국가 발전에 기여합니다.
+          </p>
+          <p
+            className="text-white/50"
+            style={{
+              fontSize: 'clamp(0.65rem, 1.2vw, 0.88rem)',
+              letterSpacing: '0.2em',
+            }}
+          >
+            Veterans-first ethics. Transparent governance. Impact for national infrastructure.
+          </p>
+        </div>
+
+        {/* SCROLL 인디케이터 */}
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2">
+          <span className="text-white/40 tracking-[0.3em]" style={{ fontSize: '9px' }}>SCROLL</span>
+          <div className="animate-bounce">
+            <svg className="w-4 h-4 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+
+        {/* 워터마크 */}
         {showBottomText && (
           <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 z-20 text-right">
             <div className="inline-block">
-            <p className="text-sm sm:text-base md:text-[16pt] text-white font-korean drop-shadow-lg">
-              25.10.25 올림픽대교 전경
-            </p>
-            <p className="text-xs sm:text-sm md:text-[10pt] text-white/80 font-korean drop-shadow-md mt-1.5 md:mt-2">
-              © 대한민국상이군경회시설사업소. All rights reserved.
-            </p>
+              <p className="text-sm md:text-[13pt] text-white/70 font-korean drop-shadow-lg">
+                25.10.25 올림픽대교 전경
+              </p>
+              <p className="text-xs md:text-[9pt] text-white/45 font-korean drop-shadow-md mt-1">
+                © 대한민국상이군경회시설사업소. All rights reserved.
+              </p>
             </div>
           </div>
         )}
       </section>
-
-      {/* 경영이념 콘텐츠 섹션 (리디자인) */}
-      <div className="relative min-h-screen py-20 bg-gradient-to-b from-slate-50 via-white to-white" id="management-philosophy">
-
-        <div className="relative mx-auto w-[95%] sm:w-[90%] md:w-[85%] px-4 sm:px-6 lg:px-8 py-16">
-          {/* 상단 섹션 */}
-          <div className="mb-14">
-            <div 
-              ref={philosophyTitleRef}
-              className={`space-y-4 transition-all duration-1000 ${visiblePhilosophyTitle ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}
-            >
-              <div className="flex justify-center">
-                <span className="inline-block h-1.5 w-12 rounded-full bg-[#1e40af]" />
-              </div>
-              <h2
-                className="text-left xl:text-center font-extrabold text-[clamp(1.25rem,4vw,3rem)] leading-[1.35] tracking-tight"
-                style={{ paddingBottom: '0.3em', overflow: 'visible' }}
-              >
-                <span className="bg-gradient-to-r from-[#1D66B3] to-slate-900 bg-clip-text text-transparent" style={{ display: 'inline-block', lineHeight: '1.4' }}>
-                  <span className="block break-keep xl:whitespace-nowrap">국가유공자의 높은 이상을 바탕으로,</span>
-                  <span className="block break-keep xl:whitespace-nowrap">공명정대하고 투명한 조직운영으로 국가 발전에 기여합니다.</span>
-                </span>
-              </h2>
-              <p className="text-left xl:text-center text-slate-600 text-[clamp(0.875rem,1.8vw,1.125rem)]">
-                Veterans-first ethics. Transparent governance. Impact for national infrastructure.
-              </p>
-            </div>
-          </div>
-
-          {/* 주요 정보 카드 섹션 - 건설업계 톤다운 스타일 */}
-          <div 
-            ref={philosophyContentRef}
-            className={`mb-20 transition-all duration-1000 ${visiblePhilosophyContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* 국가 보훈의 이념 카드 */}
-              <div 
-                ref={el => philosophyCardRefs.current[1] = el}
-                className={`rounded-xl border border-slate-200 bg-white p-7 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-700 ${visiblePhilosophyCards[1] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-              >
-                <div className="flex items-start gap-4">
-                  <div className="h-10 w-10 rounded-full bg-[#1e40af]/10 ring-1 ring-[#1e40af]/20 flex items-center justify-center font-bold" style={{ color: '#0B1C2B' }}>Ⅰ</div>
-                  <div>
-                    <h3 className="text-[clamp(1.25rem,2.5vw,1.5rem)] font-bold" style={{ color: '#0C2B4B' }}>국가 보훈의 이념</h3>
-                    <p className="mt-2 leading-7 text-[clamp(0.875rem,1.8vw,1rem)]" style={{ color: '#0C2B4B' }}>
-                      대한민국의 오늘은 국가의 존립과 발전을 위해 공헌하거나 이를 위해 자신을 희생한 국가유공자의 공헌과 희생 위에 이룩되었습니다. 국가유공자의 공헌과 희생이 숭고한 애국정신의 귀감으로서 항구적으로 존중되도록 하며, 그에 상응하는 명예와 보상이 유지되도록 합니다.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 단체설립근거 카드 */}
-              <div 
-                ref={el => philosophyCardRefs.current[2] = el}
-                className={`rounded-xl border border-slate-200 bg-white p-7 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-700 ${visiblePhilosophyCards[2] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-              >
-                <div className="flex items-start gap-4">
-                  <div className="h-10 w-10 rounded-full bg-indigo-600/10 ring-1 ring-indigo-600/20 flex items-center justify-center font-bold" style={{ color: '#0B1C2B' }}>Ⅱ</div>
-                  <div>
-                    <h3 className="text-[clamp(1.25rem,2.5vw,1.5rem)] font-bold" style={{ color: '#0C2B4B' }}>단체설립근거</h3>
-                    <p className="mt-2 leading-7 text-[clamp(0.875rem,1.8vw,1rem)]" style={{ color: '#0C2B4B' }}>
-                      『국가유공자 등 단체설립에 관한 법률』 제1조에 근거하여 설립되었으며, 국가유공자와 유족의 상부상조, 자활능력 배양, 민족정기 선양, 자유민주주의 수호 및 평화적 통일과 국제평화 유지에 이바지함을 목적으로 합니다.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 핵심 가치 섹션 - 미니멀 기업형 카드 */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-1.5 w-12 rounded-full bg-[#1e40af]" />
-              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold" style={{ color: '#1D66B3' }}>핵심 가치</h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
-              {/* 상부상조 카드 */}
-              <div 
-                ref={el => coreValueRefs.current[0] = el}
-                className={`rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-700 ${visibleCoreValues[0] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-slate-50 ring-1 ring-slate-200 flex items-center justify-center text-slate-700">
-                    <HandHeart className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-[clamp(1rem,2vw,1.25rem)] font-semibold" style={{ color: '#0B1C2B' }}>상부상조</h3>
-                    <p className="text-[clamp(0.75rem,1.5vw,0.875rem)]" style={{ color: '#0B1C2B' }}>서로 돕고 함께 성장</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 자활자립 카드 */}
-              <div 
-                ref={el => coreValueRefs.current[1] = el}
-                className={`rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-700 ${visibleCoreValues[1] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-slate-50 ring-1 ring-slate-200 flex items-center justify-center text-slate-700">
-                    <Target className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-[clamp(1rem,2vw,1.25rem)] font-semibold" style={{ color: '#0B1C2B' }}>자활자립</h3>
-                    <p className="text-[clamp(0.75rem,1.5vw,0.875rem)]" style={{ color: '#0B1C2B' }}>스스로 역량으로 자립</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 명예선양 카드 */}
-              <div 
-                ref={el => coreValueRefs.current[2] = el}
-                className={`rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-700 ${visibleCoreValues[2] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-slate-50 ring-1 ring-slate-200 flex items-center justify-center text-slate-700">
-                    <Award className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-[clamp(1rem,2vw,1.25rem)] font-semibold" style={{ color: '#0B1C2B' }}>명예선양</h3>
-                    <p className="text-[clamp(0.75rem,1.5vw,0.875rem)]" style={{ color: '#0B1C2B' }}>숭고한 희생을 기림</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 국가발전 카드 */}
-              <div 
-                ref={el => coreValueRefs.current[3] = el}
-                className={`rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-700 ${visibleCoreValues[3] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-slate-50 ring-1 ring-slate-200 flex items-center justify-center text-slate-700">
-                    <TrendingUp className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-[clamp(1rem,2vw,1.25rem)] font-semibold" style={{ color: '#0B1C2B' }}>국가발전</h3>
-                    <p className="text-[clamp(0.75rem,1.5vw,0.875rem)]" style={{ color: '#0B1C2B' }}>인프라 발전 기여</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 세계평화 카드 */}
-              <div 
-                ref={el => coreValueRefs.current[4] = el}
-                className={`rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-700 ${visibleCoreValues[4] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-slate-50 ring-1 ring-slate-200 flex items-center justify-center text-slate-700">
-                    <Globe className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-[clamp(1rem,2vw,1.25rem)] font-semibold" style={{ color: '#0B1C2B' }}>세계평화</h3>
-                    <p className="text-[clamp(0.75rem,1.5vw,0.875rem)]" style={{ color: '#0B1C2B' }}>공동번영과 협력</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* 인사말 콘텐츠 섹션 */}
       <div className="min-h-screen pt-10" id="ceo-message" style={{ background: 'linear-gradient(to bottom, #ffffff 0%, #F0F4F8 100%)' }}>
@@ -581,6 +509,80 @@ export const GreetingSection = () => {
                   </p>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 핵심가치 — 다크 테마 풀-width 스트립 */}
+      <div className="w-full bg-[#071420] py-20 px-4" id="core-values">
+        <div className="mx-auto w-[95%] sm:w-[90%] md:w-[85%]">
+          {/* 헤더 */}
+          <div className="flex items-center gap-4 mb-14">
+            <div className="h-px w-10 bg-[#1D66B3]" />
+            <span className="text-[10px] tracking-[0.45em] text-white/35 uppercase">Core Values</span>
+          </div>
+
+          {/* 5열 그리드 */}
+          <div className="grid grid-cols-2 md:grid-cols-5">
+            {/* 상부상조 */}
+            <div
+              ref={el => { coreValueRefs.current[0] = el; }}
+              className={`flex flex-col items-center text-center py-10 px-6 border-r border-white/10 transition-all duration-700 ${visibleCoreValues[0] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+            >
+              <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-5">
+                <HandHeart className="w-7 h-7 text-[#3B82F6]" />
+              </div>
+              <h3 className="text-white font-semibold text-lg mb-1.5 font-korean">상부상조</h3>
+              <p className="text-white/35 text-[10px] tracking-widest uppercase">Mutual Support</p>
+            </div>
+
+            {/* 자활자립 */}
+            <div
+              ref={el => { coreValueRefs.current[1] = el; }}
+              className={`flex flex-col items-center text-center py-10 px-6 border-r border-white/10 transition-all duration-700 delay-75 ${visibleCoreValues[1] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+            >
+              <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-5">
+                <Target className="w-7 h-7 text-[#3B82F6]" />
+              </div>
+              <h3 className="text-white font-semibold text-lg mb-1.5 font-korean">자활자립</h3>
+              <p className="text-white/35 text-[10px] tracking-widest uppercase">Self-Reliance</p>
+            </div>
+
+            {/* 명예선양 */}
+            <div
+              ref={el => { coreValueRefs.current[2] = el; }}
+              className={`flex flex-col items-center text-center py-10 px-6 border-r border-white/10 transition-all duration-700 delay-150 ${visibleCoreValues[2] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+            >
+              <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-5">
+                <Award className="w-7 h-7 text-[#3B82F6]" />
+              </div>
+              <h3 className="text-white font-semibold text-lg mb-1.5 font-korean">명예선양</h3>
+              <p className="text-white/35 text-[10px] tracking-widest uppercase">Honor Legacy</p>
+            </div>
+
+            {/* 국가발전 */}
+            <div
+              ref={el => { coreValueRefs.current[3] = el; }}
+              className={`flex flex-col items-center text-center py-10 px-6 border-r border-white/10 transition-all duration-700 delay-200 ${visibleCoreValues[3] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+            >
+              <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-5">
+                <TrendingUp className="w-7 h-7 text-[#3B82F6]" />
+              </div>
+              <h3 className="text-white font-semibold text-lg mb-1.5 font-korean">국가발전</h3>
+              <p className="text-white/35 text-[10px] tracking-widest uppercase">National Progress</p>
+            </div>
+
+            {/* 세계평화 */}
+            <div
+              ref={el => { coreValueRefs.current[4] = el; }}
+              className={`flex flex-col items-center text-center py-10 px-6 col-span-2 md:col-span-1 transition-all duration-700 delay-300 ${visibleCoreValues[4] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+            >
+              <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-5">
+                <Globe className="w-7 h-7 text-[#3B82F6]" />
+              </div>
+              <h3 className="text-white font-semibold text-lg mb-1.5 font-korean">세계평화</h3>
+              <p className="text-white/35 text-[10px] tracking-widest uppercase">World Peace</p>
             </div>
           </div>
         </div>
@@ -972,7 +974,6 @@ export const GreetingSection = () => {
           </div>
         </div>
       </div>
-
 
     </div>
   );

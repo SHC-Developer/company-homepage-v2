@@ -116,7 +116,7 @@ export default defineConfig(({ mode }) => ({
   base: mode === "production" ? (process.env.VITE_BASE || "/") : "/",
   server: {
     host: "::",
-    port: 8080,
+    port: 8081,
   },
   build: {
     outDir: "dist",

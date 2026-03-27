@@ -60,7 +60,7 @@ All colors MUST be HSL.
     /* Korean typography scale */
     --font-korean: 'Noto Sans KR', -apple-system, sans-serif;
     --font-english: 'Inter', -apple-system, sans-serif;
-    --font-logo: 'Song Myung', serif;
+    --font-logo: 'Noto Serif KR', serif;
 
     --sidebar-background: 0 0% 98%;
 
@@ -452,6 +452,27 @@ All colors MUST be HSL.
     background: var(--gradient-section);
   }
   
+  /* Hero text link - animated underline on hover */
+  .hero-link {
+    position: relative;
+    padding-bottom: 2px;
+  }
+
+  .hero-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.8);
+    transition: width 0.3s ease;
+  }
+
+  .hero-link:hover::after {
+    width: 100%;
+  }
+
   /* Korean engineering button variants */
   .btn-primary-korean {
     @apply bg-primary text-primary-foreground hover:bg-[hsl(var(--primary-hover))] 
