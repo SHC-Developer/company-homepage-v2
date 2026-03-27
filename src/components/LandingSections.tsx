@@ -13,7 +13,7 @@ import {
   Zap
 } from 'lucide-react';
 import { NAV_CONTENT_INSET_CLASS } from '@/lib/navContentInset';
-import { withBaseUrl, setupLoopingVideo } from '@/lib/utils';
+import { withBaseUrl, setupLoopingVideo, portfolioImage, supportsWebP } from '@/lib/utils';
 import logo2 from '@/assets/logo2.png';
 
 interface CategoryItem {
@@ -53,6 +53,9 @@ export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?:
   const [showIndicator, setShowIndicator] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  /** 슬라이드 등에서 히어로로 다시 올라올 때 hero-text-slide-down 애니메이션 재생 */
+  const [heroTextAnimKey, setHeroTextAnimKey] = useState(0);
+  const prevActiveIndexForHeroRef = useRef<number | null>(null);
   const touchStartYRef = useRef(0);
   const touchCurrentYRef = useRef(0);
   const touchStartTimeRef = useRef(0);
@@ -114,44 +117,40 @@ export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?:
   }, []);
 
   // 이미지 경로 헬퍼 함수
-  const getImagePath = useCallback((filename: string) => {
-    return withBaseUrl(`portfolio/${filename}`);
-  }, []);
-
   const slides: SlideItem[] = useMemo(
     () => [
       {
         id: 'slide-1',
         text: '당신의 오늘은 안전하셨습니까?',
-        imageSrc: getImagePath('performance1.JPG'),
+        imageSrc: portfolioImage('performance1'),
         highlightWords: HIGHLIGHT_WORDS[0],
       },
       {
         id: 'slide-2',
         text: '국민들의 안전하고 쾌적한',
-        imageSrc: getImagePath('performance3.JPG'),
+        imageSrc: portfolioImage('performance3'),
         highlightWords: HIGHLIGHT_WORDS[1],
       },
       {
         id: 'slide-3',
         text: '아름다운 생활을 영위하는 나라건설',
-        imageSrc: getImagePath('performance5.jpg'),
+        imageSrc: portfolioImage('performance5'),
         highlightWords: HIGHLIGHT_WORDS[2],
       },
       {
         id: 'slide-4',
         text: '사람과 사랑으로 융합된',
-        imageSrc: getImagePath('performance8.jpg'),
+        imageSrc: portfolioImage('performance8'),
         highlightWords: HIGHLIGHT_WORDS[3],
       },
       {
         id: 'slide-5',
         text: '성장의 발자국을 남기는 시설사업소가 되겠습니다.',
-        imageSrc: getImagePath('performance12.jpg'),
+        imageSrc: portfolioImage('performance12'),
         highlightWords: HIGHLIGHT_WORDS[4],
       },
     ],
-    [getImagePath]
+    []
   );
 
   // 각 슬라이드(Hero 포함)의 애니메이션 완료 상태 추적
@@ -187,12 +186,12 @@ export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?:
     isScrollingRef.current = true;
     window.scrollTo({
       top: targetIndex * height,
-      behavior: 'smooth',
+      behavior: isMobile ? 'auto' : 'smooth',
     });
     setTimeout(() => {
       isScrollingRef.current = false;
-    }, 800);
-  }, []);
+    }, isMobile ? 200 : 800);
+  }, [isMobile]);
 
   // 비디오 설정 (Hero Section용)
   useEffect(() => {
@@ -239,6 +238,14 @@ export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?:
 
   useEffect(() => {
     activeIndexRef.current = activeIndex;
+  }, [activeIndex]);
+
+  useEffect(() => {
+    const prev = prevActiveIndexForHeroRef.current;
+    if (prev !== null && prev > 0 && activeIndex === 0) {
+      setHeroTextAnimKey((k) => k + 1);
+    }
+    prevActiveIndexForHeroRef.current = activeIndex;
   }, [activeIndex]);
 
   // 스크롤 스냅을 위한 wheel 이벤트 처리 (데스크톱만)
@@ -373,7 +380,7 @@ export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?:
   const scrollToSection = (index: number) => {
     window.scrollTo({
       top: index * viewportHeightRef.current,
-      behavior: 'smooth',
+      behavior: isMobile ? 'auto' : 'smooth',
     });
   };
 
@@ -519,8 +526,10 @@ export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?:
             backgroundSize: 'cover',
             backgroundPosition: effectiveBgPos,
             transform: bgZoomed ? layout.panTo : layout.panFrom,
-            transition: 'transform 3.5s cubic-bezier(0.2, 0.6, 0.2, 1), filter 1.2s ease-out',
-            filter: bgZoomed ? 'blur(0px)' : 'blur(4px)',
+            transition: isMobile
+              ? 'transform 3.5s cubic-bezier(0.2, 0.6, 0.2, 1)'
+              : 'transform 3.5s cubic-bezier(0.2, 0.6, 0.2, 1), filter 1.2s ease-out',
+            filter: isMobile ? 'none' : (bgZoomed ? 'blur(0px)' : 'blur(4px)'),
           }}
         />
         {/* 텍스트 출현과 동기된 추가 오버레이 애니메이션 */}
@@ -611,10 +620,12 @@ export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?:
                 ref={videoRef}
                 className="absolute top-1/2 left-1/2 w-[177.77vh] h-[56.25vw] min-h-full min-w-full transform -translate-x-1/2 -translate-y-1/2 object-cover"
                 src={`${import.meta.env.BASE_URL}video/Main1.mp4`}
+                poster={withBaseUrl(`video/poster.${supportsWebP() ? 'webp' : 'jpg'}`)}
                 autoPlay
                 muted
                 playsInline
                 loop={false}
+                preload={isMobile ? 'none' : 'auto'}
                 style={{ pointerEvents: 'none' }}
               />
               <div className="absolute inset-0 z-10" style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.2) 55%, rgba(0,0,0,0.05) 100%)' }}></div>
@@ -626,7 +637,7 @@ export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?:
         {/* Hero Text Overlay */}
         <div className="absolute inset-0 z-20 flex flex-col justify-start pt-[32vh] text-white">
           <div className="w-[95%] sm:w-[90%] md:w-[85%] mx-auto px-2 sm:px-4 md:px-6 lg:px-8">
-          <div className="max-w-lg">
+          <div key={heroTextAnimKey} className="max-w-lg">
             <p className="hero-text-slide-down text-[8px] sm:text-xs tracking-[0.15em] sm:tracking-[0.2em] italic text-white/60 mb-3 whitespace-nowrap">
               Engineering Safety. Inspiring Innovation.
             </p>
@@ -659,10 +670,12 @@ export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?:
           </div>
           </div>
         </div>
-        {/* Scroll Down Indicator */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 animate-bounce pointer-events-none">
-          <span className="text-[7pt] text-white/40 tracking-[0.2em] uppercase">Scroll</span>
-          <ChevronDown className="w-4 h-4 text-white/40" />
+        {/* Scroll Down Indicator — 전폭 기준 flex 중앙(변환 누적·스크롤바 영향 완화) */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center px-4 sm:bottom-6 md:bottom-8 pb-[max(0rem,env(safe-area-inset-bottom,0px))]">
+          <div className="flex flex-col items-center gap-1 animate-bounce">
+            <span className="text-[7pt] text-white/40 tracking-[0.2em] uppercase">Scroll</span>
+            <ChevronDown className="h-4 w-4 text-white/40" />
+          </div>
         </div>
         {/* Caption - 우측 세로 텍스트 */}
         <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 z-20 pointer-events-none">
@@ -758,7 +771,7 @@ export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?:
               {/* 배경: performance4 현장 사진 */}
               <div
                 className="absolute inset-0 bg-center bg-cover scale-100 group-hover:scale-105 transition-transform duration-700 ease-out"
-                style={{ backgroundImage: `url('${getImagePath('performance4.jpg')}')` }}
+                style={{ backgroundImage: `url('${portfolioImage('performance4')}')` }}
               />
               {/* 다크 오버레이 */}
               <div className="absolute inset-0 bg-gradient-to-t from-[#0B1C2B]/88 via-[#0B1C2B]/25 to-[#0B1C2B]/5 group-hover:via-[#0B1C2B]/35 transition-all duration-500" />
@@ -803,7 +816,7 @@ export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?:
               {/* 배경: performance11 현장 사진 */}
               <div
                 className="absolute inset-0 bg-center bg-cover scale-100 group-hover:scale-105 transition-transform duration-700 ease-out"
-                style={{ backgroundImage: `url('${getImagePath('performance11.jpg')}')` }}
+                style={{ backgroundImage: `url('${portfolioImage('performance11')}')` }}
               />
               {/* 다크 오버레이 */}
               <div className="absolute inset-0 bg-gradient-to-t from-[#122A4A]/88 via-[#122A4A]/25 to-[#122A4A]/5 group-hover:via-[#122A4A]/35 transition-all duration-500" />

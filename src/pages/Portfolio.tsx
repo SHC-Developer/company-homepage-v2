@@ -3,7 +3,7 @@ import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { withBaseUrl } from '@/lib/utils';
+import { withBaseUrl, portfolioImage } from '@/lib/utils';
 import { Search } from 'lucide-react';
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -432,17 +432,14 @@ const Portfolio = () => {
             {!heroImageError && (
               <img
                 src={
-                  heroImageAttempt === 0 ? getImagePath('performance4.jpg') :
-                  heroImageAttempt === 1 ? getImagePath('performance4.JPG') :
-                  heroImageAttempt === 2 ? getImagePath('performance1.JPG') :
-                  heroImageAttempt === 3 ? getImagePath('performance1.jpg') :
-                  heroImageAttempt === 4 ? getImagePath('performance5.jpg') :
-                  getImagePath('performance5.JPG')
+                  heroImageAttempt === 0 ? portfolioImage('performance4') :
+                  heroImageAttempt === 1 ? portfolioImage('performance1') :
+                  portfolioImage('performance5')
                 }
                 alt="Portfolio hero background"
                 className="h-full w-full object-cover scale-[1.03] motion-safe:transition-transform motion-safe:duration-[2500ms] motion-safe:ease-out"
                 onError={() => {
-                  if (heroImageAttempt < 5) {
+                  if (heroImageAttempt < 2) {
                     setHeroImageAttempt(prev => prev + 1);
                   } else {
                     // 모든 시도 실패 시 이미지 숨김

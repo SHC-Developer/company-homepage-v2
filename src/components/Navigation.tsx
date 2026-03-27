@@ -295,11 +295,11 @@ export const Navigation = ({ variant = 'default', forceLightTheme = false, autoH
             <Link 
               to="/" 
               onClick={() => window.scrollTo(0, 0)} 
-              className={`h-full flex items-center text-[10px] leading-snug sm:text-xs md:text-sm lg:text-base xl:text-lg desktop:text-2xl 2xl:text-3xl font-semibold font-logo transition-colors duration-300 whitespace-nowrap overflow-hidden text-ellipsis sm:leading-none ${
+              className={`h-full flex items-center text-base leading-none sm:text-sm md:text-sm lg:text-base xl:text-lg desktop:text-2xl 2xl:text-3xl font-semibold font-logo transition-colors duration-300 whitespace-nowrap overflow-hidden text-ellipsis ${
                 brandTextClass
               }`}
             >
-              {/* 모바일에서도 전체 회사명 표시, 글자 크기만 줄임 */}
+              {/* 모바일: 기존 text-base / sm~ 는 태블릿 네비 높이에 맞춘 단계 */}
               대한민국상이군경회시설사업소
             </Link>
           </div>

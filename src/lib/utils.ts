@@ -11,6 +11,25 @@ export function withBaseUrl(path: string) {
   return `${baseUrl}${normalized}`;
 }
 
+let _webpSupported: boolean | null = null;
+export function supportsWebP(): boolean {
+  if (_webpSupported !== null) return _webpSupported;
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 1;
+    _webpSupported = canvas.toDataURL('image/webp').startsWith('data:image/webp');
+  } catch {
+    _webpSupported = false;
+  }
+  return _webpSupported;
+}
+
+export function portfolioImage(name: string): string {
+  const ext = supportsWebP() ? 'webp' : 'jpg';
+  return withBaseUrl(`portfolio/${name}.${ext}`);
+}
+
 export function setupLoopingVideo(
   video: HTMLVideoElement,
   handlers: {
