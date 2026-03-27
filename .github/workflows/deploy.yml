@@ -1,3 +1,7 @@
+# GitHub Pages 정적 배포 (Actions → Settings → Pages → Source: GitHub Actions)
+# Project Pages URL: https://<owner>.github.io/<repo>/
+# 커스텀 도메인(루트)만 쓸 경우: 아래 Build env의 VITE_BASE·VITE_BASENAME 제거 후 저장소에서 빌드.
+
 name: Deploy to GitHub Pages
 
 on:
@@ -11,7 +15,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: true
 
 jobs:
@@ -31,6 +35,10 @@ jobs:
         run: npm ci
 
       - name: Build
+        env:
+          # Vite asset base & React Router basename (Project Pages 서브경로)
+          VITE_BASE: /${{ github.event.repository.name }}/
+          VITE_BASENAME: /${{ github.event.repository.name }}
         run: npm run build
 
       - name: Configure Pages
