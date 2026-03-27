@@ -13,7 +13,7 @@ import {
   Zap
 } from 'lucide-react';
 import { NAV_CONTENT_INSET_CLASS } from '@/lib/navContentInset';
-import { withBaseUrl, setupLoopingVideo, portfolioImage, supportsWebP } from '@/lib/utils';
+import { withBaseUrl, setupLoopingVideo, portfolioImage, HERO_VIDEO_POSTER_DATA_URL } from '@/lib/utils';
 import logo2 from '@/assets/logo2.png';
 
 interface CategoryItem {
@@ -620,7 +620,7 @@ export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?:
                 ref={videoRef}
                 className="absolute top-1/2 left-1/2 w-[177.77vh] h-[56.25vw] min-h-full min-w-full transform -translate-x-1/2 -translate-y-1/2 object-cover"
                 src={`${import.meta.env.BASE_URL}video/Main1.mp4`}
-                poster={withBaseUrl(`video/poster.${supportsWebP() ? 'webp' : 'jpg'}`)}
+                poster={HERO_VIDEO_POSTER_DATA_URL}
                 autoPlay
                 muted
                 playsInline
@@ -638,7 +638,7 @@ export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?:
         <div className="absolute inset-0 z-20 flex flex-col justify-start pt-[32vh] text-white">
           <div className="w-[95%] sm:w-[90%] md:w-[85%] mx-auto px-2 sm:px-4 md:px-6 lg:px-8">
           <div key={heroTextAnimKey} className="max-w-lg">
-            <p className="hero-text-slide-down text-[8px] sm:text-xs tracking-[0.15em] sm:tracking-[0.2em] italic text-white/60 mb-3 whitespace-nowrap">
+            <p className="hero-text-slide-down text-[10px] max-sm:leading-snug sm:text-xs tracking-[0.15em] sm:tracking-[0.2em] italic max-sm:text-white/75 sm:text-white/60 mb-3 whitespace-nowrap">
               Engineering Safety. Inspiring Innovation.
             </p>
             <h1
@@ -677,18 +677,14 @@ export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?:
             <ChevronDown className="h-4 w-4 text-white/40" />
           </div>
         </div>
-        {/* Caption - 우측 세로 텍스트 */}
-        <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 z-20 pointer-events-none">
+        {/* 우측 세로: © 회사명 + 올림픽대교 캡션 나란히(세로쓰기) */}
+        <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 z-20 pointer-events-none flex flex-row items-center gap-2.5 sm:gap-3">
           <p
-            className="text-xs sm:text-sm text-white/65 font-korean tracking-[0.12em]"
+            className="text-xs sm:text-sm text-white/65 font-korean tracking-[0.12em] shrink-0"
             style={{ writingMode: 'vertical-rl' }}
           >
             25.10.25 올림픽대교 전경
           </p>
-        </div>
-        {/* Copyright */}
-        <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 z-20 text-right pointer-events-none">
-          <p className="text-[7pt] sm:text-[8pt] text-white/35 font-korean">© 대한민국상이군경회시설사업소.</p>
         </div>
       </section>
 

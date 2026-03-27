@@ -11,6 +11,13 @@ export function withBaseUrl(path: string) {
   return `${baseUrl}${normalized}`;
 }
 
+/** 히어로 영상 poster: 네트워크 없이 메인 히어로 배경색(#1e3f64)과 동일한 단색(파란 빈 화면) */
+export const HERO_VIDEO_POSTER_DATA_URL =
+  'data:image/svg+xml,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="9" viewBox="0 0 16 9"><rect width="16" height="9" fill="#1e3f64"/></svg>'
+  );
+
 let _webpSupported: boolean | null = null;
 export function supportsWebP(): boolean {
   if (_webpSupported !== null) return _webpSupported;

@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { HandHeart, Target, Award, TrendingUp, Globe } from 'lucide-react';
-import { setupLoopingVideo } from '@/lib/utils';
+import { setupLoopingVideo, HERO_VIDEO_POSTER_DATA_URL } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { OrganizationChartV4 } from '@/components/OrganizationChartV4';
 
 export const GreetingSection = () => {
   const [videoError, setVideoError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [showBottomText, setShowBottomText] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const [cinematicPhase, setCinematicPhase] = useState<0 | 1 | 2>(0);
   const [visibleParagraphs, setVisibleParagraphs] = useState<boolean[]>([false, false, false, false, false, false]);
   const [visibleTitle, setVisibleTitle] = useState(false);
@@ -43,6 +43,16 @@ export const GreetingSection = () => {
         // 자동 재생이 실패해도 에러로 처리하지 않음 (브라우저 정책)
       },
     });
+  }, []);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const touchCapable = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      setIsMobile(touchCapable || window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   // 시네마틱 자막 사이클링 — 영화 자막처럼 문구가 순차 등장 후 반복
@@ -287,10 +297,12 @@ export const GreetingSection = () => {
                 ref={videoRef}
                 className="absolute top-1/2 left-1/2 w-[177.77vh] h-[56.25vw] min-h-full min-w-full transform -translate-x-1/2 -translate-y-1/2 object-cover"
                 src={`${import.meta.env.BASE_URL}video/Main2.mp4`}
+                poster={HERO_VIDEO_POSTER_DATA_URL}
                 autoPlay
                 muted
                 playsInline
                 loop={false}
+                preload={isMobile ? 'none' : 'auto'}
                 style={{ pointerEvents: 'none' }}
               />
               {/* 텍스트 가독성을 위한 오버레이 — 하단 강화 */}
@@ -307,12 +319,6 @@ export const GreetingSection = () => {
               style={{ backgroundImage: 'linear-gradient(135deg, rgba(13,42,74,0.95), rgba(30,111,217,0.7))' }}
             />
           )}
-        </div>
-
-        {/* ABOUT 레이블 — 좌상단 */}
-        <div className="absolute top-24 left-8 md:left-16 z-20">
-          <span className="text-[10px] tracking-[0.35em] text-white/50 uppercase">ABOUT</span>
-          <div className="mt-1.5 h-px w-8 bg-[#1D66B3]" />
         </div>
 
         {/* ── Act 1 — 시설사업소 타이틀 (페이지 진입 ~ 5초) ── */}
@@ -411,19 +417,15 @@ export const GreetingSection = () => {
           </div>
         </div>
 
-        {/* 워터마크 */}
-        {showBottomText && (
-          <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 z-20 text-right">
-            <div className="inline-block">
-              <p className="text-sm md:text-[13pt] text-white/70 font-korean drop-shadow-lg">
-                25.10.25 올림픽대교 전경
-              </p>
-              <p className="text-xs md:text-[9pt] text-white/45 font-korean drop-shadow-md mt-1">
-                © 대한민국상이군경회시설사업소. All rights reserved.
-              </p>
-            </div>
-          </div>
-        )}
+        {/* 우측 세로 캡션 — 메인 히어로와 동일 배치 */}
+        <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 z-20 pointer-events-none flex flex-row items-center gap-2.5 sm:gap-3">
+          <p
+            className="text-xs sm:text-sm text-white/65 font-korean tracking-[0.12em] shrink-0"
+            style={{ writingMode: 'vertical-rl' }}
+          >
+            25.10.25 올림픽대교 전경
+          </p>
+        </div>
       </section>
 
       {/* 인사말 콘텐츠 섹션 */}
