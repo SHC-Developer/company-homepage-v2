@@ -696,19 +696,19 @@ export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?:
         {/* 3. Sitemap Footer Section (Index 6) */}
         <div
           ref={sitemapRef}
-          className="relative w-full flex flex-col overflow-hidden"
+          className="relative box-border flex w-full flex-col overflow-hidden pb-[max(0.35rem,env(safe-area-inset-bottom,0px))]"
           style={{
             background: 'radial-gradient(ellipse at 50% 45%, #122438 0%, #0B1C2B 55%, #060f18 100%)',
             height: 'calc(var(--vh, 1vh) * 100)',
           }}
         >
-          {/* 중앙 콘텐츠 래퍼 (타이틀 + 카드) — Navigation과 동일 가로 룰(sm/md/lg) */}
+          {/* 중앙 콘텐츠 래퍼 — min-h-0으로 자식이 축소 가능(모바일 한 화면) */}
           <div
-            className={`relative z-10 flex flex-1 flex-col justify-center ${NAV_CONTENT_INSET_CLASS}`}
+            className={`relative z-10 flex min-h-0 flex-1 flex-col justify-center ${NAV_CONTENT_INSET_CLASS}`}
           >
 
-          {/* 상단 타이틀 영역 — 모바일은 네비~주요사업 간격 상대적으로 촘촘히 */}
-          <div className="flex w-full flex-col items-stretch pt-14 sm:pt-28 pb-5 sm:pb-6">
+          {/* 상단 타이틀 영역 — 태블릿/모바일 세로 여백 축소 */}
+          <div className="flex w-full min-h-0 flex-col items-stretch pt-7 pb-2 sm:pt-12 sm:pb-3 md:pt-16 md:pb-4 lg:pt-24 lg:pb-5 xl:pt-28 xl:pb-6">
             <div className="w-full">
               {/* 사업분야 — 모바일: 카드행과 동일 너비(w-full) · sm+: 가로 0.8배 */}
               <div className="mx-auto w-full max-w-full sm:w-[80%]">
@@ -734,19 +734,16 @@ export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?:
                 </div>
                 {/* 하단 구분선 — 주요사업 블록 너비에 맞춤 */}
                 <div
-                  className="mt-6 h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent sm:mt-10"
+                  className="mt-3 h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent sm:mt-5 md:mt-8"
                   style={{ maxWidth: '100%', width: sitemapVisible ? '100%' : '0%', transition: 'width 0.9s ease 0.55s' }}
                 />
               </div>
             </div>
           </div>
 
-          {/* 두 카드 영역 — 좌우 패딩은 NAV_CONTENT_INSET_CLASS(네비와 동일) */}
+          {/* 두 카드 영역 — 모바일/태블릿은 dvh 기준으로 카드 높이 축소(푸터 가림 완화) */}
           <div
-            className="flex w-full items-stretch gap-3 pb-0 sm:gap-4 lg:gap-5"
-            style={{
-              height: 'clamp(200px, 54vh, 580px)',
-            }}
+            className="flex w-full shrink-0 items-stretch gap-2 pb-0 sm:gap-3 md:gap-4 lg:gap-5 h-[clamp(7.25rem,22dvh,12.5rem)] sm:h-[clamp(8rem,26dvh,17rem)] md:h-[clamp(9.5rem,32dvh,22rem)] lg:h-[clamp(11rem,42dvh,28rem)] xl:h-[clamp(12.5rem,50vh,36.25rem)]"
           >
             {/* 카드 1 — 보유면허 및 기술 */}
             <button
@@ -761,7 +758,7 @@ export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?:
               {/* 배경: performance4 현장 사진 */}
               <div
                 className="absolute inset-0 bg-center bg-cover scale-100 group-hover:scale-105 transition-transform duration-700 ease-out"
-                style={{ backgroundImage: `url('/portfolio/performance4.jpg')` }}
+                style={{ backgroundImage: `url('${getImagePath('performance4.jpg')}')` }}
               />
               {/* 다크 오버레이 */}
               <div className="absolute inset-0 bg-gradient-to-t from-[#0B1C2B]/88 via-[#0B1C2B]/25 to-[#0B1C2B]/5 group-hover:via-[#0B1C2B]/35 transition-all duration-500" />
@@ -791,7 +788,9 @@ export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?:
 
             {/* 카드 2 — 지명원 다운로드 */}
             <a
-              href="/%EB%8C%80%ED%95%9C%EB%AF%BC%EA%B5%AD%EC%83%81%EC%9D%B4%EA%B5%B0%EA%B2%BD%ED%9A%8C%EC%8B%9C%EC%84%A4%EC%82%AC%EC%97%85%EC%86%8C%20%EC%A7%80%EB%AA%85%EC%9B%90.pdf"
+              href={withBaseUrl(
+                '%EB%8C%80%ED%95%9C%EB%AF%BC%EA%B5%AD%EC%83%81%EC%9D%B4%EA%B5%B0%EA%B2%BD%ED%9A%8C%EC%8B%9C%EC%84%A4%EC%82%AC%EC%97%85%EC%86%8C%20%EC%A7%80%EB%AA%85%EC%9B%90.pdf'
+              )}
               download="대한민국상이군경회시설사업소 지명원.pdf"
               className="group relative flex-1 overflow-hidden rounded-xl sm:rounded-2xl text-left focus:outline-none"
               style={{
@@ -804,7 +803,7 @@ export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?:
               {/* 배경: performance11 현장 사진 */}
               <div
                 className="absolute inset-0 bg-center bg-cover scale-100 group-hover:scale-105 transition-transform duration-700 ease-out"
-                style={{ backgroundImage: `url('/portfolio/performance11.jpg')` }}
+                style={{ backgroundImage: `url('${getImagePath('performance11.jpg')}')` }}
               />
               {/* 다크 오버레이 */}
               <div className="absolute inset-0 bg-gradient-to-t from-[#122A4A]/88 via-[#122A4A]/25 to-[#122A4A]/5 group-hover:via-[#122A4A]/35 transition-all duration-500" />
@@ -835,9 +834,11 @@ export const LandingSections = ({ onActiveIndexChange }: { onActiveIndexChange?:
 
           </div>{/* /중앙 콘텐츠 래퍼 */}
 
-          {/* Footer 스트립: 전폭 구분선 + 본문은 네비와 동일 너비 */}
-          <div className="relative z-10 mt-2 w-full border-t border-white/10">
-            <div className={`${NAV_CONTENT_INSET_CLASS} py-5 sm:py-6`}>
+          {/* Footer 스트립: 전폭 구분선 + 본문은 네비와 동일 너비 + 브라우저/제스처 바 안전 여백 */}
+          <div className="relative z-10 mt-1 w-full shrink-0 border-t border-white/10 md:mt-2">
+            <div
+              className={`${NAV_CONTENT_INSET_CLASS} py-2.5 sm:py-3 md:py-4 lg:py-5 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))]`}
+            >
             {/* 데스크톱·태블릿 — 그리드로 주소 열을 남은 폭 전체 사용 + 우측 정렬·반응형 글자 */}
             <div className="hidden sm:grid sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start sm:gap-x-3 md:gap-x-5 text-white">
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 md:gap-x-5">
